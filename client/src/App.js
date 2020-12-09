@@ -25,7 +25,7 @@ class App extends Component {
       );
       this.item = new this.web3.eth.Contract(
         Item.abi,
-        Item.networks[networkId] && Item.networks[networkId].address,
+        Item.networks[this.networkId] && Item.networks[networkId].address,
       );
 
       // Set web3, accounts, and contract to the state, and then proceed with an
@@ -70,14 +70,14 @@ class App extends Component {
     );
   }
    listenToPaymentEvent = () => {
-    let self = this;
     this.itemManager.events.SupplyChainStep().on("data",async function(evt) {
-      if(evt.returnValues._step == 2) {
+      let self = this;
+      if(evt.returnValues._step === 1) {
         let item = await self.itemManager.methods.items(evt.returnValues._itemIndex).call();
         console.log(item);
         alert("Item "+ item._identifier + " was paid, deliver it now!");
       };
-      console.log(evt);
+      //console.log(evt);
     });
   }
 

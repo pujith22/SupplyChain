@@ -16,9 +16,12 @@ contract Item{
     }
 
     receive() external payable{
+        // for checking if the value defined is exactly equal to the value of the item.
         require(msg.value == priceInWei, "Partial Payments are not Allowed! Sorry!");
+        // for handling simultaneous payments
         require(paidWei == 0, "Item is already paid!");
         paidWei += msg.value;
+        // for withdrawing funds from the item to the supplier.
         (bool success, ) = address(parentContract).call{value:msg.value}(abi.encodeWithSignature("triggerPayment(uint256)",index));
         require(success,"Delivery UnSuccessful");
     }
