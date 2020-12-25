@@ -1,32 +1,58 @@
-pragma solidity ^0.6.0;
+pragma solidity ^0.7.0;
+import "./Manufacturer.sol";
 
-import "./ItemManager.sol";
+contract Item
+{
+    string name;
+    uint128 priceInWei;
+    uint32 quantity;
+    address payable owner;
+    uint128 moneyWithHold;
+    Manufacturer manu;
+    uint32 itemIdentifier;
 
-contract Item{
-    uint public priceInWei;
-    uint public paidWei;
-    uint public index;
+    event withDrawl(address owner,uint128 money,string message);
+    constructor(string memory _name,uint128 price,uint32 _itemIdentifier,Manufacturer _manu) public
+    {
+        this.name = _name;
 
-    ItemManager parentContract;
-
-    constructor(ItemManager _parentContract, uint _priceInWei, uint _index) public{
-        priceInWei = _priceInWei;
-        index = _index;
-        parentContract = _parentContract;
+        this.priceInWei = price;
+        this.manu = _manu;
+        this.itemIdentifier = _itemIdentifier;
+    }
+    function withDrawMoney() public payable
+    {
+        require(msg.sender==this.owner,"You are not eligible to withdraw the amount");
+        require(this.moneyWithHold>0,"Hello Owner! No money to withdraw");
+        uint128 money = this.moneyWithHold;
+        this.moneyWithHold = 0;
+        this.owner.send(money);
+        emit withDrawl(msg.sender,money,"WithDrawl Successful");
+    }
+    function setQuantity(uint64 _quantity) public
+    {
+        require(msg.sender==this.owner,"Only owner can modify the quantity");
+        this.quantity = _quantity;
+    }
+    function incrementQuantity() public
+    {
+        require(msg.sender==this.owner,"Only owner can modify the quantity");
+        this.quantity += 1;
+    }
+    function getQuantity() public view returns(uint64)
+    {
+        return this.quantity;
     }
 
-    receive() external payable{
-        // for checking if the value defined is exactly equal to the value of the item.
-        require(msg.value == priceInWei, "Partial Payments are not Allowed! Sorry!");
-        // for handling simultaneous payments
-        require(paidWei == 0, "Item is already paid!");
-        paidWei += msg.value;
-        // for withdrawing funds from the item to the supplier.
-        (bool success, ) = address(parentContract).call{value:msg.value}(abi.encodeWithSignature("triggerPayment(uint256)",index));
-        require(success,"Delivery UnSuccessful");
+    function getPrice() public view returns(uint128)
+    {
+        return this.priceInWei;
     }
 
-    fallback() external{
-        
+    function setPrice(uint128 price) public
+    {
+        require(msg.sender==this.owner,"Only owner can modify the quantity");
+        this.priceInWei = price;
     }
+
 }
